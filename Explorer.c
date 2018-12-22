@@ -102,7 +102,7 @@ unsigned char EEPROM_read(unsigned int uiAddress)
 	EECR |= (1<<EERE); 			// logical one to EEMWE
 	return EEDR; 				// return data from register
 }
-void InitADC()
+void InitADC()// initialize the adc
 {
  //Rrescalar div factor =128
 ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
@@ -111,9 +111,9 @@ ADMUX|=(1<<REFS0);
 
 }
 
-int ReadADC(uint8_t ch)
+int ReadADC(uint8_t ch)// read the adc
 {
-   //Select ADC Cha\nel ch must be 0-7
+   //Select ADC Channel ch must be 0-7
    ch=ch&0b00000111;
    ADMUX|=ch;
  	ADCSRA |= (1 << ADEN);  // Enable ADC
@@ -131,16 +131,26 @@ int ReadADC(uint8_t ch)
 int record (void)// THis function records notes played by the user and stores is in EEPROM
 {
 
-	int notespace = -1;//Adress that the note will go into
-	int delayspace= 3;
-	int noteCount=0;
-	unsigned int time=0;
+	int notespace = -1;//Address that the note will go into
+	int delayspace= 3;// the position in EEPROM that the note will go in
+	int noteCount=0;// number of ntoes counted so far 
+	unsigned int time=0; // timer variable
 	unsigned int noteLength=0;
 	unsigned int noteDelay=0;
-	double tickScale = 4194/65535;
-	int nextNote=0;
+	double tickScale = 4194/65535;// scales down the value of the timer so that it fits in EEPROM
+	int nextNote=0;// tells us when the next note comes in 
 	// I only need to recieve the note on , and artificially create the note off
-
+	
+	
+	// each note is stored in EEPROM like the following
+	// Notebit 1 | Notebit 2| delaybit1 | delaybit 2 | delaybit3 | delaybit 4|
+	
+	//notebit 1 and 2 represrnt the bits of the note 
+	//delaybit 1 and 2 represrnt the delay between the current note and note off
+	
+	//delaybit 3 and 4 represrnt the delay between note off and the next note 
+	
+	
 	while( recBool() && (noteCount < 204))
 	{
 	uint8_t status = USART_Receive();// status
@@ -157,6 +167,7 @@ int record (void)// THis function records notes played by the user and stores is
 				char delaybit1 = noteDelay>>8; // Shift of the right 2 chars
 				char delaybit2 = noteDelay & 0x0FF; // keep the right 2 chars
 				
+				// this will write the bits for the delay between the the note off and the current note
 				EEPROM_write(++notespace, delaybit1);
 				EEPROM_write(++notespace, delaybit2);
 			}
@@ -173,23 +184,27 @@ int record (void)// THis function records notes played by the user and stores is
 
 		else if (data2==64)
 		{	
-			unsigned int offTime=TM16_ReadTCNT1(); // this is fine 
-			double difference =(offTime - time); /// this is fine
+			unsigned int offTime=TM16_ReadTCNT1(); // this is fine. read the current counter
+			double difference =(offTime - time); /// Calculate the differnce between note on and off
 
-			double scaled=(difference*4194)/65535; // this works fine
+			double scaled=(difference*4194)/65535; // scale down the time
 			noteLength = scaled;
+			// split the note into two differnt bytes to store into EEPROM 
+			
 			char delaybit1 = noteLength>>8; // Shift of the right 2 chars
 			char delaybit2 = noteLength & 0x0FF; // keep the right 2 chars
 
+			
+			//write both Bits into EEPROM. THes bits reprenet the time between note on and note off 
 			EEPROM_write(++notespace, delaybit1);
 			EEPROM_write(++notespace, delaybit2);
 
-			time = TM16_ReadTCNT1();
+			time = TM16_ReadTCNT1();// update time with current time
 			nextNote=1;
 		}
 
 		}
-		return notespace;
+		return notespace;// This lets us know where the last note is
 		
 }
 
@@ -197,19 +212,19 @@ void playback(){// This function playsback notes stored in EEPROM
 		int x = 0;
 		while(!modifyBool()&&playbackBool()&&(EEPROM_read(x) != 0x0)){ // This checks if we reached the end of a recording session or if Modify is switched on
 			// Transmit note on
-      USART_Transmit(0x90);
+     			USART_Transmit(0x90);
 			USART_Transmit(EEPROM_read(x));// Transmit the note stored by user
 			USART_Transmit(0x64);
 			PORTB=EEPROM_read(x);// This will light up the LEDs in acordance to the note played
 			TCNT1=0;
 			////////
-			_delay_ms((EEPROM_read(x+1)<<8) | (EEPROM_read(x+2))); // This will mimic the same delay the user had between two notes
-			////////
+			_delay_ms((EEPROM_read(x+1)<<8) | (EEPROM_read(x+2))); // This will mimic the same delay the user had between note on  and note off
+			//////// transmit note off 
 			USART_Transmit(0x80);
 			USART_Transmit(EEPROM_read(x));
 			USART_Transmit(0x40);
 			///////
-			_delay_ms((EEPROM_read(x+3)<<8) | (EEPROM_read(x+4)));
+			_delay_ms((EEPROM_read(x+3)<<8) | (EEPROM_read(x+4)));// delay between note off and next note
 			x = x + 5;
 		}
 		
@@ -235,21 +250,21 @@ int photoCell(unsigned int delay){// This function will return a value from the 
 void modify() // When the modify switch is tunred on, this will use values from the photo cell to either slow or speed up the playback
 {
 	int x = 0;
-		while(modifyBool()&&(EEPROM_read(x) != 0x0)){
+		while(modifyBool()&&(EEPROM_read(x) != 0x0)){// check if modify is on and if we haven't reached the end of a recoring session
 			USART_Transmit(0x90);
-			USART_Transmit(EEPROM_read(x));
+			USART_Transmit(EEPROM_read(x));// tranmit note from note on
 			USART_Transmit(0x64);
-			PORTB=EEPROM_read(x);
-			TCNT1=0;
+			PORTB=EEPROM_read(x); // display note on LED bard
+			TCNT1=0;// restart TImer count
 			////////
-			_delay_ms(photoCell((EEPROM_read(x+1)<<8) | (EEPROM_read(x+2))));
+			_delay_ms(photoCell((EEPROM_read(x+1)<<8) | (EEPROM_read(x+2)))); // delay till notee off
 			////////
 			USART_Transmit(0x80);
 			USART_Transmit(EEPROM_read(x));
 			USART_Transmit(0x40);
 			///////
-			_delay_ms(photoCell((EEPROM_read(x+3)<<8) | (EEPROM_read(x+4))));
-			x = x + 5;
+			_delay_ms(photoCell((EEPROM_read(x+3)<<8) | (EEPROM_read(x+4)))); // delay till next note on
+			x = x + 5;// Move to next note 
 		}
 
 }
@@ -271,21 +286,19 @@ return PINA & (1<<PIN1);
 
 int main(void)
 {
-	DDRB = 0xFF;
+	DDRB = 0xFF; //initially turn LED's off
 	PORTB = 0;
-	InitADC();
+	InitADC();// initialise ADC, USART, and TIMER
 	USART_Init();
 	timeInit();	
 
 	while(1)
 	{	
-		int rec=PINA & (1<<PIN0);
-		int mod=PINA & (1<<PIN1);
-		int play=PINA & (1<<PIN2);
+		
 
-		if (PINA & (1<<PIN2))
+		if (PINA & (1<<PIN2))// check playback 
 		{
-			if (PINA & (1<<PIN1))
+			if (PINA & (1<<PIN1)) // check modify
 			{
 			modify();
 			}
@@ -293,14 +306,12 @@ int main(void)
 			_delay_ms(200);
 				
 		}
-		if (PINA & (1<<PIN0))
+		if (PINA & (1<<PIN0)) //check record
 		{
-			int lastNote =  record(); // get the value of hte last pointer 
-			// write bytes for delay till next note
+			int lastNote =  record(); // get the position of the last bit in EEPROM
+			// We write an empty note at the end of the last note of the recording session to indicate the end of a session.
 			EEPROM_write(lastNote+1, 0x00); // delay to till nbext note is 0
 			EEPROM_write(lastNote+2, 0x00);// delay to next note is 0
-
-			// write an empty notes
 			EEPROM_write(lastNote+3, 0x00); 
 		}
 
