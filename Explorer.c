@@ -147,8 +147,13 @@ int record (void)// THis function records notes played by the user and stores is
 	
 	//notebit 1 and 2 represrnt the bits of the note 
 	//delaybit 1 and 2 represrnt the delay between the current note and note off
-	
 	//delaybit 3 and 4 represrnt the delay between note off and the next note 
+	
+	// A complete recording session would look like the following if 3 notes were played:
+	// Notebit 1 | Notebit 2| delaybit1 | delaybit 2 | delaybit3 | delaybit 4|
+	// Notebit 1 | Notebit 2| delaybit1 | delaybit 2 | delaybit3 | delaybit 4|
+	// Notebit 1 | Notebit 2| delaybit1 | delaybit 2 | delaybit3 | delaybit 4|
+	//0x0|0x0|0x0|0x0|0x0|0x0|// this is an end of REcording session indicator
 	
 	
 	while( recBool() && (noteCount < 204))
@@ -164,12 +169,12 @@ int record (void)// THis function records notes played by the user and stores is
 				double difference =(offTime - time); /// this is fine
 				double scaled=(difference*4194)/65535; // this works fine
 				noteDelay = scaled;
-				char delaybit1 = noteDelay>>8; // Shift of the right 2 chars
-				char delaybit2 = noteDelay & 0x0FF; // keep the right 2 chars
+				char delaybit3 = noteDelay>>8; // Shift of the right 2 chars
+				char delaybit4 = noteDelay & 0x0FF; // keep the right 2 chars
 				
 				// this will write the bits for the delay between the the note off and the current note
-				EEPROM_write(++notespace, delaybit1);
-				EEPROM_write(++notespace, delaybit2);
+				EEPROM_write(++notespace, delaybit3);
+				EEPROM_write(++notespace, delaybit4);
 			}
 
 			PORTB = note; // turn the keys on
