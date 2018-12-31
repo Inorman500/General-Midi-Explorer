@@ -7,7 +7,7 @@ will record General MIDI notes coming into the device and will modify and replay
 interact with the GME to control the modifications by changing the amount of light falling on optical sensors. The light levels
 on the sensors will modify the sounds that are played back from the GME through the PC.
 
-THhe schematic for the GME can me seen here https://imgur.com/a/7goG53R
+THhe schematic for the GME can be seen here https://imgur.com/a/7goG53R
 
 
 The GME has three modes of operation controlled by switches: Record, Playback, Playback with Modification.
