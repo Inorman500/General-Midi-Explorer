@@ -1,6 +1,6 @@
 # General-Midi-Explorer
-In this lab the goal was to build and program a MIDI (Musical Instrument Digital Interface) controller, the GME(General MIDI Exmploer). A MIDI controller is a device which sends MIDI messages to a synthesizer. In this lab, the synthesizer is a program
-running on the PC, Midi OX.
+In this lab the goal was to utilize the ATMEGA 328p(arduino) to build and program a MIDI (Musical Instrument Digital Interface) controller, the GME(General MIDI Exmploer). A MIDI controller is a device which sends MIDI messages to a synthesizer. In this lab, the synthesizer is a program
+running on the PC, Midi OX. 
 
 The GME that my group and I created allows the user to "explore" the sounds available in General MIDI. Specifically, the GME
 will record General MIDI notes coming into the device and will modify and replay the notes on command. The user will
