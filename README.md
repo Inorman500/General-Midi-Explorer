@@ -9,7 +9,6 @@ on the sensors will modify the sounds that are played back from the GME through 
 
 The schematic for the GME can be seen here https://imgur.com/a/7goG53R
 
-
 The GME has three modes of operation controlled by switches: Record, Playback, Playback with Modification.
 
 Record: When the GME enters recording mode, a new recording is initiated that will overwrite any recording presently stored.
@@ -19,10 +18,7 @@ have been stored and should stop recording when it reaches its maximum storage c
 GME leaves recording mode, but the stored notes remain in memory until a new recording is made, even if the device is reset.
 
 Playback: When the GME enters playback mode, the notes will be played back from EEPROM memory with approximately
-the same inter-note timing as in their recording. You may configure the program to enforce a minimum time between playing
-note on and corresponding note off if the note durations are too short to hear. When the end of the stored recording is reached,
-the recording will start playing again from the beginning. If the system is reset or turned on when the playback switch set to on,
-the GME should enter playback mode immediately and begin playing the recorded music from the start.
+the same inter-note timing as in their recording. When the end of the stored recording is reached, the recording will start playing again from the beginning. If the system is reset or turned on when the playback switch set to on, the GME will enter playback mode immediately and begin playing the recorded music from the start.
 
 Playback with Modification: If the playback and modify switches are both on, the playback will be modified depending on the
 amount of light falling on an optical sensor. The on-chip ADC converts an analog voltage from the photo sensor circuit into a
